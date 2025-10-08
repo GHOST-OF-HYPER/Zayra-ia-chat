@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Zayra</title>
   <style>
+    /* estilo tema escuro (mesmo do anterior) */
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       background-color: #0e0e14;
@@ -16,14 +17,12 @@
       height: 100vh;
       margin: 0;
     }
-
     h1 {
       color: #9c6bff;
       text-shadow: 0 0 10px rgba(156, 107, 255, 0.6);
       margin-bottom: 10px;
       letter-spacing: 1px;
     }
-
     #chat-box {
       width: 90%;
       max-width: 400px;
@@ -34,8 +33,9 @@
       background: linear-gradient(145deg, #161625, #10101b);
       overflow-y: auto;
       box-shadow: 0 0 20px rgba(156, 107, 255, 0.1);
+      display: flex;
+      flex-direction: column;
     }
-
     .mensagem {
       margin: 8px 0;
       padding: 10px 14px;
@@ -45,7 +45,6 @@
       font-size: 15px;
       line-height: 1.4;
     }
-
     .usuario {
       background: linear-gradient(145deg, #3a3a80, #252552);
       align-self: flex-end;
@@ -54,7 +53,6 @@
       color: #d0cfff;
       box-shadow: 0 0 10px rgba(100, 100, 255, 0.3);
     }
-
     .zayra {
       background: linear-gradient(145deg, #26263b, #1a1a2d);
       align-self: flex-start;
@@ -63,14 +61,12 @@
       color: #e4dcff;
       box-shadow: 0 0 10px rgba(156, 107, 255, 0.25);
     }
-
     #input-area {
       display: flex;
       width: 90%;
       max-width: 400px;
       margin-top: 10px;
     }
-
     #mensagemInput {
       flex: 1;
       padding: 10px;
@@ -80,11 +76,7 @@
       background-color: #1a1a28;
       color: #fff;
     }
-
-    #mensagemInput::placeholder {
-      color: #7a7a9e;
-    }
-
+    #mensagemInput::placeholder { color: #7a7a9e; }
     button {
       padding: 10px 20px;
       border: none;
@@ -96,7 +88,6 @@
       transition: 0.2s ease;
       box-shadow: 0 0 10px rgba(156, 107, 255, 0.3);
     }
-
     button:hover {
       background: linear-gradient(145deg, #7c55ff, #6640d4);
       box-shadow: 0 0 20px rgba(156, 107, 255, 0.5);
@@ -105,86 +96,16 @@
 </head>
 <body>
   <h1>Zayra</h1>
-  <div id="chat-box"></div>
+
+  <!-- Importante: apenas UM chat-box deve existir aqui -->
+  <div id="chat-box" role="log" aria-live="polite"></div>
 
   <div id="input-area">
-    <input type="text" id="mensagemInput" placeholder="Fale com a Zayra..." />
+    <input type="text" id="mensagemInput" placeholder="Fale com a Zayra..." autocomplete="off" />
     <button id="enviarBtn">Enviar</button>
   </div>
 
+  <!-- Inclui apenas UMA vez o script -->
   <script src="script.js"></script>
-</body>
-</html>            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 10px;
-            max-width: 75%;
-            word-wrap: break-word;
-        }
-
-        .usuario {
-            background-color: #d1e7ff;
-            align-self: flex-end;
-            text-align: right;
-            margin-left: auto;
-        }
-
-        .zayra {
-            background-color: #e8e8e8;
-            align-self: flex-start;
-            text-align: left;
-            margin-right: auto;
-        }
-
-        #input-area {
-            display: flex;
-            width: 90%;
-            max-width: 400px;
-            margin-top: 10px;
-        }
-
-        #mensagemInput {
-            flex: 1;
-            padding: 10px;
-            border-radius: 10px 0 0 10px;
-            border: 1px solid #ccc;
-            outline: none;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #0078d4;
-            color: white;
-            font-weight: bold;
-            border-radius: 0 10px 10px 0;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #005fa3;
-        }
-    </style>
-</head>
-<body>
-    <h1>Zayra</h1>
-    <div id="chat-box"></div>
-
-    <div id="input-area">
-        <input type="text" id="mensagemInput" placeholder="Fale com a Zayra..." />
-        <button id="enviarBtn">Enviar</button>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>        const button = document.getElementById("falarButton");
-        button.addEventListener("click", () => {
-            const pergunta = prompt("Diga algo para a Zayra:");
-            if(pergunta && typeof responder === "function") {
-                alert(responder(pergunta));
-            } else {
-                alert("A Zayra ainda não está pronta para responder!");
-            }
-        });
-    </script>
 </body>
 </html>

@@ -1,158 +1,158 @@
-// ======== Variáveis principais ========
-const chatBox = document.getElementById("chat-box");
-const mensagemInput = document.getElementById("mensagemInput");
-const sendBtn = document.getElementById("sendBtn");
-const imageBtn = document.getElementById("imageBtn");
-const imageInput = document.getElementById("imageInput");
-const selectedFile = document.getElementById("selectedFile");
-const resetBtn = document.getElementById("resetBtn");
-const ajudaBtn = document.getElementById("ajudaBtn");
-const goBottomBtn = document.getElementById("goBottomBtn");
+// Função para criar mensagens no chat
+function criarMensagem(texto, tipo, imagemURL = null) {
+  const chatBox = document.getElementById("chat-box");
 
-// ======== Função para scroll automático ========
-function scrollToBottom() {
+  const mensagem = document.createElement("div");
+  mensagem.classList.add("mensagem", tipo);
+
+  if (imagemURL) {
+    const img = document.createElement("img");
+    img.src = imagemURL;
+    img.style.maxWidth = "70%";
+    img.style.maxHeight = "250px";
+    img.style.borderRadius = "12px";
+    img.style.objectFit = "contain";
+    img.style.display = "block";
+    img.style.alignSelf = tipo === "usuario" ? "flex-end" : "flex-start";
+    mensagem.appendChild(img);
+  }
+
+  if (texto) {
+    const textoElem = document.createElement("div");
+    textoElem.classList.add("msg-text");
+    textoElem.textContent = texto;
+    mensagem.appendChild(textoElem);
+  }
+
+  const meta = document.createElement("div");
+  meta.classList.add("msg-meta");
+  const agora = new Date();
+  meta.textContent = agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  mensagem.appendChild(meta);
+
+  chatBox.appendChild(mensagem);
+
+  // Scroll automático
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// ======== Função para criar mensagens no chat ========
-function criarMensagem(texto, tipo="zayra", meta="") {
-  const msg = document.createElement("div");
-  msg.classList.add("mensagem", tipo);
+// Função para enviar mensagem
+async function enviarMensagem() {
+  const input = document.getElementById("mensagemInput");
+  const texto = input.value.trim();
+  const fileInput = document.getElementById("imageInput");
+  const file = fileInput.files[0];
 
-  const msgText = document.createElement("div");
-  msgText.classList.add("msg-text");
-  msgText.textContent = texto;
-  msg.appendChild(msgText);
+  if (!texto && !file) return;
 
-  if(meta) {
-    const msgMeta = document.createElement("div");
-    msgMeta.classList.add("msg-meta");
-    msgMeta.textContent = meta;
-    msg.appendChild(msgMeta);
-  }
+  // Mensagem do usuário
+  criarMensagem(texto, "usuario", file ? URL.createObjectURL(file) : null);
 
-  chatBox.appendChild(msg);
-  scrollToBottom();
-}
+  input.value = "";
+  fileInput.value = "";
+  document.getElementById("selectedFile").textContent = "";
 
-// ======== Função typing animation ========
-function showTypingAnimation() {
+  // Mostrar "digitando" Zayra
+  const chatBox = document.getElementById("chat-box");
   const typing = document.createElement("div");
-  typing.classList.add("zayra-typing");
-
-  for(let i=0;i<3;i++){
-    const dot = document.createElement("div");
-    dot.classList.add("dot");
-    typing.appendChild(dot);
-  }
-
+  typing.classList.add("mensagem", "zayra-typing");
+  typing.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
   chatBox.appendChild(typing);
-  scrollToBottom();
-  return typing;
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  // Espera para simular "digitando"
+  await new Promise(r => setTimeout(r, 500));
+
+  // Chamar serverless
+  let resposta = await chamarServerless(texto, file);
+  if(!resposta) resposta = responderLocal(texto);
+
+  typing.remove();
+
+  criarMensagem(resposta, "zayra");
 }
 
-// ======== Função de resposta local (fallback) ========
+// Função responder local (fallback)
 function responderLocal(mensagem) {
   mensagem = mensagem.toLowerCase();
   if (mensagem.includes("oi") || mensagem.includes("olá")) return "Oi! Eu sou a Zayra 😊";
-  if (mensagem.includes("tudo bem")) return "Tudo ótimo! E com você?";
-  if (mensagem.includes("quem é você")) return "Sou a Zayra, seu assistente virtual em desenvolvimento 💫";
-  return "Ainda estou aprendendo... pode repetir de outro jeito?";
+  else if (mensagem.includes("tudo bem")) return "Tudo ótimo! E com você?";
+  else if (mensagem.includes("quem é você")) return "Sou a Zayra, seu assistente virtual em desenvolvimento 💫";
+  else return "Ainda estou aprendendo... pode repetir de outro jeito?";
 }
 
-// ======== Função para enviar mensagem ========
-async function enviarMensagem(texto) {
-  if(!texto.trim()) return;
+// Função para avisos flutuantes
+function mostrarAviso(texto){
+  const aviso = document.createElement("div");
+  aviso.classList.add("float-msg");
+  aviso.textContent = texto;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 2000);
+}
 
-  criarMensagem(texto, "usuario");
-  mensagemInput.value = "";
-
-  const typing = showTypingAnimation();
-
+// Função para chamar serverless
+async function chamarServerless(texto, file = null) {
   try {
-    // Aqui você conecta com serverless (descomente quando tiver o endpoint)
-    /*
-    const res = await fetch("https://seu-backend/responder", {
+    const formData = new FormData();
+    formData.append("texto", texto);
+    if(file) formData.append("imagem", file);
+
+    const response = await fetch("/api/zayra", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensagem: texto })
+      body: formData
     });
-    const data = await res.json();
-    */
-    const data = { resposta: responderLocal(texto) }; // fallback local
-    typing.remove();
-    criarMensagem(data.resposta, "zayra");
-  } catch (err) {
-    typing.remove();
-    criarMensagem("Erro ao conectar com servidor.", "zayra");
+
+    if(!response.ok) throw new Error("Erro ao chamar serverless");
+    const data = await response.json();
+    return data.resposta || null;
+  } catch(err) {
     console.error(err);
+    return null;
   }
 }
 
-// ======== Eventos ========
-sendBtn.addEventListener("click", () => enviarMensagem(mensagemInput.value));
-mensagemInput.addEventListener("keypress", e => { if(e.key==="Enter") enviarMensagem(mensagemInput.value) });
+// Botões principais
+document.getElementById("sendBtn").addEventListener("click", enviarMensagem);
+document.getElementById("mensagemInput").addEventListener("keypress", e => {
+  if(e.key === "Enter") enviarMensagem();
+});
 
-// ======== Upload de imagens ========
+// Selecionar imagem
+const imageBtn = document.getElementById("imageBtn");
+const imageInput = document.getElementById("imageInput");
+const selectedFile = document.getElementById("selectedFile");
+
 imageBtn.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
-  const file = imageInput.files[0];
-  if(file){
-    selectedFile.textContent = file.name;
-
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = document.createElement("img");
-      img.src = e.target.result;
-      img.style.maxWidth = "70%";
-      img.style.borderRadius = "12px";
-      img.style.margin = "6px 0";
-      criarMensagem("", "usuario"); // balão vazio para imagem
-      const lastMsg = chatBox.lastChild;
-      lastMsg.appendChild(img);
-      scrollToBottom();
-    };
-    reader.readAsDataURL(file);
+  if(imageInput.files[0]){
+    selectedFile.textContent = imageInput.files[0].name;
+  } else {
+    selectedFile.textContent = "";
   }
 });
 
-// ======== Botões de reset e ajuda ========
-function showFloatingMsg(texto){
-  const aviso = document.createElement("div");
-  aviso.textContent = texto;
-  aviso.style.position = "fixed";
-  aviso.style.top = "50%";
-  aviso.style.left = "50%";
-  aviso.style.transform = "translate(-50%,-50%)";
-  aviso.style.padding = "12px 18px";
-  aviso.style.background = "rgba(0,0,0,0.5)";
-  aviso.style.color = "#fff";
-  aviso.style.borderRadius = "12px";
-  aviso.style.zIndex = "9999";
-  aviso.style.fontSize = "14px";
-  document.body.appendChild(aviso);
-
-  setTimeout(()=>aviso.remove(),1500);
-}
-
-resetBtn.addEventListener("click", () => {
-  chatBox.innerHTML = "";
-  showFloatingMsg("Chat resetado!");
+// Resetar chat
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("chat-box").innerHTML = "";
+  mostrarAviso("Chat resetado!");
 });
 
-ajudaBtn.addEventListener("click", () => {
-  showFloatingMsg("Dica: Digite uma mensagem e clique em Enviar. Pode enviar imagens também!");
+// Ajuda
+document.getElementById("ajudaBtn").addEventListener("click", () => {
+  mostrarAviso("Digite algo para conversar com a Zayra ou envie uma imagem.");
 });
 
-// ======== Botão "go to bottom" ========
+// Scroll botão ir para o fim
+const goBottomBtn = document.getElementById("goBottomBtn");
+const chatBox = document.getElementById("chat-box");
+
 chatBox.addEventListener("scroll", () => {
-  if(chatBox.scrollTop + chatBox.clientHeight < chatBox.scrollHeight - 10){
+  if(chatBox.scrollTop + chatBox.clientHeight < chatBox.scrollHeight - 20){
     goBottomBtn.style.display = "block";
   } else {
     goBottomBtn.style.display = "none";
   }
 });
-goBottomBtn.addEventListener("click", scrollToBottom);
-
-// ======== Inicialização ========
-mensagemInput.focus();
+goBottomBtn.addEventListener("click", () => {
+  chatBox.scrollTop = chatBox.scrollHeight;
+});

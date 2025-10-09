@@ -1,4 +1,6 @@
+// ----------------------
 // Função para criar mensagens no chat
+// ----------------------
 function criarMensagem(texto, tipo, imagemURL = null) {
   const chatBox = document.getElementById("chat-box");
 
@@ -13,7 +15,7 @@ function criarMensagem(texto, tipo, imagemURL = null) {
     img.style.borderRadius = "12px";
     img.style.objectFit = "contain";
     img.style.display = "block";
-    img.style.alignSelf = tipo === "usuario" ? "flex-end" : "flex-start";
+    img.style.marginTop = texto ? "6px" : "0";
     mensagem.appendChild(img);
   }
 
@@ -27,7 +29,7 @@ function criarMensagem(texto, tipo, imagemURL = null) {
   const meta = document.createElement("div");
   meta.classList.add("msg-meta");
   const agora = new Date();
-  meta.textContent = agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  meta.textContent = agora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   mensagem.appendChild(meta);
 
   chatBox.appendChild(mensagem);
@@ -36,7 +38,21 @@ function criarMensagem(texto, tipo, imagemURL = null) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Função para enviar mensagem
+// ----------------------
+// Função para mostrar aviso flutuante
+// ----------------------
+function mostrarAviso(texto) {
+  const aviso = document.createElement("div");
+  aviso.classList.add("float-msg");
+  aviso.textContent = texto;
+  document.body.appendChild(aviso);
+  setTimeout(() => aviso.remove(), 2000);
+  aviso.classList.add("show");
+}
+
+// ----------------------
+// Função enviar mensagem
+// ----------------------
 async function enviarMensagem() {
   const input = document.getElementById("mensagemInput");
   const texto = input.value.trim();
@@ -63,68 +79,57 @@ async function enviarMensagem() {
   // Espera para simular "digitando"
   await new Promise(r => setTimeout(r, 500));
 
-  // Chamar serverless
-  let resposta = await chamarServerless(texto, file);
-  if(!resposta) resposta = responderLocal(texto);
+  let resposta = "";
+
+  try {
+    const body = { texto };
+
+    if (file) {
+      // Converte imagem para base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      await new Promise(resolve => {
+        reader.onload = () => {
+          body.imagemBase64 = reader.result.split(",")[1]; // remove o prefixo data:image
+          resolve();
+        };
+      });
+    }
+
+    // Chamada ao endpoint serverless
+    const res = await fetch("/api/zayra", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    resposta = data.resposta;
+
+  } catch (err) {
+    resposta = "Ops, ocorreu um erro na comunicação com o servidor 😢";
+  }
 
   typing.remove();
-
   criarMensagem(resposta, "zayra");
 }
 
-// Função responder local (fallback)
-function responderLocal(mensagem) {
-  mensagem = mensagem.toLowerCase();
-  if (mensagem.includes("oi") || mensagem.includes("olá")) return "Oi! Eu sou a Zayra 😊";
-  else if (mensagem.includes("tudo bem")) return "Tudo ótimo! E com você?";
-  else if (mensagem.includes("quem é você")) return "Sou a Zayra, seu assistente virtual em desenvolvimento 💫";
-  else return "Ainda estou aprendendo... pode repetir de outro jeito?";
-}
-
-// Função para avisos flutuantes
-function mostrarAviso(texto){
-  const aviso = document.createElement("div");
-  aviso.classList.add("float-msg");
-  aviso.textContent = texto;
-  document.body.appendChild(aviso);
-  setTimeout(() => aviso.remove(), 2000);
-}
-
-// Função para chamar serverless
-async function chamarServerless(texto, file = null) {
-  try {
-    const formData = new FormData();
-    formData.append("texto", texto);
-    if(file) formData.append("imagem", file);
-
-    const response = await fetch("/api/zayra", {
-      method: "POST",
-      body: formData
-    });
-
-    if(!response.ok) throw new Error("Erro ao chamar serverless");
-    const data = await response.json();
-    return data.resposta || null;
-  } catch(err) {
-    console.error(err);
-    return null;
-  }
-}
-
-// Botões principais
+// ----------------------
+// Botões e eventos
+// ----------------------
 document.getElementById("sendBtn").addEventListener("click", enviarMensagem);
 document.getElementById("mensagemInput").addEventListener("keypress", e => {
-  if(e.key === "Enter") enviarMensagem();
+  if (e.key === "Enter") enviarMensagem();
 });
 
-// Selecionar imagem
+// Seleção de imagens
 const imageBtn = document.getElementById("imageBtn");
 const imageInput = document.getElementById("imageInput");
 const selectedFile = document.getElementById("selectedFile");
 
 imageBtn.addEventListener("click", () => imageInput.click());
 imageInput.addEventListener("change", () => {
-  if(imageInput.files[0]){
+  if (imageInput.files[0]) {
     selectedFile.textContent = imageInput.files[0].name;
   } else {
     selectedFile.textContent = "";
@@ -142,17 +147,18 @@ document.getElementById("ajudaBtn").addEventListener("click", () => {
   mostrarAviso("Digite algo para conversar com a Zayra ou envie uma imagem.");
 });
 
-// Scroll botão ir para o fim
+// Botão "ir para o fim"
 const goBottomBtn = document.getElementById("goBottomBtn");
 const chatBox = document.getElementById("chat-box");
 
 chatBox.addEventListener("scroll", () => {
-  if(chatBox.scrollTop + chatBox.clientHeight < chatBox.scrollHeight - 20){
+  if (chatBox.scrollTop + chatBox.clientHeight < chatBox.scrollHeight - 20) {
     goBottomBtn.style.display = "block";
   } else {
     goBottomBtn.style.display = "none";
   }
 });
+
 goBottomBtn.addEventListener("click", () => {
   chatBox.scrollTop = chatBox.scrollHeight;
 });
